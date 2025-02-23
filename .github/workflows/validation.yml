@@ -20,12 +20,12 @@ on:
         description: "DockerHub repository name"
         required: false
         type: string
-        default: "venkatalakshmi0448/nodejs-docker:latest"
+        default: "venkatalakshmi0448/nodejs-docker"
       docker_tag:
         description: "Docker image tag"
         required: false
         type: string
-        default: "latest"
+        default: ":latest"
       deploy_env:
         description: "Deployment environment"
         required: false
