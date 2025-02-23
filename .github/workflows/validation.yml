@@ -114,7 +114,7 @@ jobs:
         run: |
           echo "🐳 DockerHub Repo: ${{ inputs.dockerhub_repo }}"
           echo "🏷️ Docker Image Tag: ${{ env.docker_tag }}"
-          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}/${{ env.docker_tag }}"
+          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:${{ env.docker_tag }}"
 
       # Build and Push Docker Image
       - name: Build and Push Docker Image
