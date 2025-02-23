@@ -14,7 +14,7 @@ on:
         description: "Path to the Dockerfile"
         required: true
         type: string
-        default: "dockerfile"
+        default: "Dockerfile"
       dockerhub_repo:
         description: "DockerHub repository name"
         required: true
@@ -37,9 +37,18 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.branch }}
-          fetch-depth: 0  # Ensures full repository is checked out
-          submodules: true  # If repo has submodules
+          ref: ${{ inputs.branch || 'main' }}
+          fetch-depth: 0
+          submodules: true
+
+      # Validate Secrets Before Proceeding
+      - name: Validate Environment Variables
+        run: |
+          if [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" || -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]]; then
+            echo "❌ Required secrets are missing!"
+            exit 1
+          fi
+          echo "✅ Required secrets are set."
 
       # Docker Login
       - name: Log in to DockerHub
@@ -48,10 +57,14 @@ jobs:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
+      # Verify Docker Login
       - name: Verify Docker Login
         run: |
-          echo "Checking Docker login status..."
-          docker info | grep -q 'Username' && echo "✅ Docker login successful!" || echo "❌ Docker login failed!"
+          if ! docker logout; then
+            echo "❌ Docker login failed!"
+            exit 1
+          fi
+          echo "✅ Docker login successful!"
 
       # Set up Buildx
       - name: Set up Docker Buildx
@@ -60,25 +73,16 @@ jobs:
       # Extract metadata for tagging
       - name: Extract metadata (tags, labels) for Docker
         id: meta
-        uses: docker/metadata-action@v3
+        uses: docker/metadata-action@v5
         with:
-          images: ${{ inputs.dockerhub_repo }}
+          images: ${{ inputs.dockerhub_repo || 'venkatalakshmi0448/nodejs-docker' }}
 
       # Build and Push Docker Image
       - name: Build and Push Docker Image
-        uses: docker/build-push-action@v3
+        uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ inputs.dockerfile }}
+          file: ${{ inputs.dockerfile || 'Dockerfile' }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-
-  validate-environment:
-    runs-on: ubuntu-latest
-    steps:
-      - name: Validate Environment Variables
-        run: |
-          echo "🔍 Validating Environment Variables..."
-          [[ -n "${{ secrets.DOCKERHUB_USERNAME }}" ]] && echo "✅ DOCKERHUB_USERNAME is set" || echo "❌ DOCKERHUB_USERNAME is missing"
-          [[ -n "${{ secrets.DOCKERHUB_PASSWORD }}" ]] && echo "✅ DOCKERHUB_PASSWORD is set" || echo "❌ DOCKERHUB_PASSWORD is missing"
