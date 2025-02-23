@@ -1,6 +1,9 @@
 name: Validate and Push Docker Image (Reusable)
 
 on:
+  push:
+    branches:
+      - main
   workflow_call:
     inputs:
       branches:
