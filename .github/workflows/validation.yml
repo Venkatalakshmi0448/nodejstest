@@ -21,11 +21,6 @@ on:
         required: false
         type: string
         default: "venkatalakshmi0448/nodejs-docker"
-      docker_tag:
-        description: "Docker image tag"
-        required: true
-        type: string
-        default: "latest"
       deploy_env:
         description: "Deployment environment"
         required: false
