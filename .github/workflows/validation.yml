@@ -14,7 +14,7 @@ on:
         description: "Path to the Dockerfile"
         required: true
         type: string
-        default: "dockerfile"
+        default: "Dockerfile"
       dockerhub_repo:
         description: "DockerHub repository name"
         required: true
@@ -31,13 +31,13 @@ on:
         type: string
         default: "staging"
 
-      secrets:
-        DOCKERHUB_USERNAME:
-           description: "DockerHub username"
-           required: true
-        DOCKERHUB_PASSWORD:
-           description: "DockerHub password or personal access token"
-           required: true
+    secrets:
+      DOCKERHUB_USERNAME:
+        description: "DockerHub username"
+        required: true
+      DOCKERHUB_PASSWORD:
+        description: "DockerHub password or personal access token"
+        required: true
 
 jobs:
   validate:
@@ -73,8 +73,9 @@ jobs:
       # Verify Docker Login
       - name: Verify Docker Login
         run: |
-          if ! docker logout; then
-            echo "❌ Docker login failed!"
+          echo "🔍 Checking Docker login..."
+          if ! docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_PASSWORD }}"; then
+            echo "❌ Login failed! Check credentials."
             exit 1
           fi
           echo "✅ Docker login successful!"
@@ -83,19 +84,12 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Extract metadata for tagging
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v5
-        with:
-          images: ${{ inputs.dockerhub_repo || 'venkatalakshmi0448/nodejs-docker' }}
-
       # Build and Push Docker Image
       - name: Build and Push Docker Image
         uses: docker/build-push-action@v5
         with:
           context: .
-          file: ${{ inputs.dockerfile || 'Dockerfile' }}
+          file: ${{ inputs.dockerfile }}
           push: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
+          tags: ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}
+          labels: "built-by=github-actions"
