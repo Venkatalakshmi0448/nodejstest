@@ -81,7 +81,8 @@ jobs:
       - name: Verify Docker Login
         run: |
           echo "🔍 Checking Docker login..."
-          if ! docker info | grep -q 'Username'; then
+          docker login -u ${{ secrets.DOCKERHUB_USERNAME }} -p ${{ secrets.DOCKERHUB_PASSWORD }}
+          if [ $? -ne 0 ]; then
             echo "❌ Docker login failed!"
             exit 1
           fi
