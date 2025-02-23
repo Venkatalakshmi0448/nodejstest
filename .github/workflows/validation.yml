@@ -14,7 +14,7 @@ on:
         description: "Path to the Dockerfile"
         required: true
         type: string
-        default: "Dockerfile"
+        default: "dockerfile"
       dockerhub_repo:
         description: "DockerHub repo name"
         required: true
