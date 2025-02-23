@@ -50,8 +50,8 @@ jobs:
       - name: Verify Dockerfile exists
         if: ${{ matrix.step == 'docker-build-push' }}
         run: |
-          if [ ! -f "${{ inputs.dockerfile }}" ]; then
-            echo "❌ ERROR: Dockerfile not found at ${{ inputs.dockerfile }}"
+          if [ ! -f ./https://github.com/Venkatalakshmi0448/nodejstest/blob/main/dockerfile ]; then
+            echo "❌ ERROR: Dockerfile not found at https://github.com/Venkatalakshmi0448/nodejstest/blob/main/dockerfile"
             exit 1
           fi
           echo "✅ Dockerfile found at ${{ inputs.dockerfile }}"
