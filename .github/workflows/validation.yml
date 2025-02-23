@@ -21,6 +21,11 @@ on:
         required: false
         type: string
         default: "venkatalakshmi0448/nodejs-docker"
+      docker_tag:
+        description: "Docker image tag"
+        required: false
+        type: string
+        default: "latest"
       deploy_env:
         description: "Deployment environment"
         required: false
@@ -46,7 +51,7 @@ jobs:
           fetch-depth: 0
           submodules: true
 
-      # Validate Inputs Before Proceeding
+      # Validate Inputs
       - name: Validate Inputs
         if: matrix.step == 'checkout'
         run: |
@@ -59,7 +64,7 @@ jobs:
           fi
           echo "✅ Inputs validation passed."
 
-      # Validate Secrets Before Proceeding
+      # Validate Secrets
       - name: Validate Secrets
         if: matrix.step == 'docker-login'
         run: |
@@ -99,8 +104,16 @@ jobs:
         if: matrix.step == 'docker-build-push'
         run: |
           echo "🐳 DockerHub Repo: ${{ inputs.dockerhub_repo }}"
-          echo "🏷️  Docker Image Tag: ${{ inputs.docker_tag }}"
-          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}"
+          
+          # Ensure docker_tag has a valid value
+          DOCKER_TAG="${{ inputs.docker_tag }}"
+          if [[ -z "$DOCKER_TAG" ]]; then
+            echo "⚠️ docker_tag is empty, using 'latest'."
+            DOCKER_TAG="latest"
+          fi
+
+          echo "🏷️ Docker Image Tag: $DOCKER_TAG"
+          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:$DOCKER_TAG"
 
       # Build and Push Docker Image
       - name: Build and Push Docker Image
@@ -111,6 +124,6 @@ jobs:
           file: ${{ inputs.dockerfile }}
           push: true
           tags: |
-            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}
+            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag || 'latest' }}
             ${{ inputs.dockerhub_repo }}:latest
           labels: "built-by=github-actions"
