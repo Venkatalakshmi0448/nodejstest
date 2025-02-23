@@ -1,99 +1,92 @@
-name: Validate Application Pipeline
+name: Validate Application Pipeline (Reusable)
 
 on:
-  push:
-    branches:
-      - main
   workflow_call:
     inputs:
-      branch:
-        description: "Branch to validate"
+      branches:
+        description: "Branches to validate"
         required: false
         type: string
-        default: "main"
-      dockerfile:
-        description: "Path to the Dockerfile"
+        default: '["main"]'
+      dockerfiles:
+        description: "Paths to Dockerfiles"
         required: false
         type: string
-        default: "Dockerfile"
+        default: '["Dockerfile"]'
       dockerhub_repo:
         description: "DockerHub repository name"
+        required: true
+        type: string
+      docker_tags:
+        description: "Docker image tags"
         required: false
         type: string
-        default: "venkatalakshmi0448/nodejs-docker"
-      docker_tag:
-        description: "Docker image tag"
+        default: '["latest"]'
+      deploy_envs:
+        description: "Deployment environments"
         required: false
         type: string
-        default: "latest"
-      deploy_env:
-        description: "Deployment environment"
-        required: false
-        type: string
-        default: "staging"
+        default: '["staging"]'
+    secrets:
+      DOCKERHUB_USERNAME:
+        required: true
+      DOCKERHUB_PASSWORD:
+        required: true
 
 jobs:
   validate:
     runs-on: ubuntu-latest
-    environment:
-      name: validate
+    environment: ${{ matrix.deploy_env }}
+
+    strategy:
+      matrix:
+        branch: ${{ fromJson(inputs.branches) }}
+        dockerfile: ${{ fromJson(inputs.dockerfiles) }}
+        docker_tag: ${{ fromJson(inputs.docker_tags) }}
+        deploy_env: ${{ fromJson(inputs.deploy_envs) }}
+      fail-fast: false  # Ensures one failure does not stop other matrix jobs
 
     steps:
-      # Checkout Repository
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.branch }}
+          ref: ${{ matrix.branch }}
           fetch-depth: 0
           submodules: true
 
-      # Validate Inputs Before Proceeding
       - name: Validate Inputs
         run: |
-          echo "Validating inputs..."
-          if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
-            echo "dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
-            dockerhub_repo="venkatalakshmi0448/nodejs-docker"
-          else
-            dockerhub_repo="${{ inputs.dockerhub_repo }}"
-          fi
-          if [[ -z "${{ inputs.docker_tag }}" ]]; then
-            echo "docker_tag is empty, using 'latest'."
-          fi
-          echo "Inputs validation passed."
+          echo "Branch: ${{ matrix.branch }}"
+          echo "Dockerfile: ${{ matrix.dockerfile }}"
+          echo "Docker Tag: ${{ matrix.docker_tag }}"
+          echo "Deployment Environment: ${{ matrix.deploy_env }}"
 
-      # Validate Secrets Before Proceeding
       - name: Validate Secrets
         run: |
-          echo "Validating secrets..."
           if [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" || -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]]; then
-            echo "Required secrets are missing!"
+            echo "❌ Required secrets are missing!"
             exit 1
           fi
-          echo "Secrets validation passed."
+          echo "✅ Secrets validation passed."
 
-      # Docker Login
       - name: Log in to DockerHub
         uses: docker/login-action@v2
         with:
           username: ${{ secrets.DOCKERHUB_USERNAME }}
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
-      # Verify Docker Login
       - name: Verify Docker Login
         run: |
           echo "🔍 Checking Docker login..."
           if ! docker info | grep -q 'Username'; then
-            echo "Docker login failed!"
+            echo "❌ Docker login failed!"
             exit 1
           fi
-          echo "Docker login successful!"
+          echo "✅ Docker login successful!"
 
-      # Set up Buildx
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      # Debug Docker Image Tags
       - name: Debug Docker Image Tags
         run: |
-          echo ""
+          echo "Using Docker tag: ${{ matrix.docker_tag }}"
