@@ -91,5 +91,7 @@ jobs:
           context: .
           file: ${{ inputs.dockerfile }}
           push: true
-          tags: ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}
+          tags: |
+            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag || 'latest' }}
+            ${{ inputs.dockerhub_repo }}:latest
           labels: "built-by=github-actions"
