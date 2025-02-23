@@ -1,4 +1,3 @@
-script:
 name: Validate Application Pipeline
 
 on:
