@@ -20,7 +20,7 @@ on:
         description: "DockerHub repository name"
         required: false
         type: string
-        default: "venkatalakshmi0448/nodejs-docker"
+        default: "venkatalakshmi0448/myimage"
       deploy_env:
         description: "Deployment environment"
         required: false
@@ -52,7 +52,7 @@ jobs:
         run: |
           echo "🚀 Validating inputs..."
           if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
-            echo "⚠️ dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
+            echo "⚠️ dockerhub_repo is missing! Using default: venkatalakshmi0448/myimage"
           fi
           if [[ -z "${{ inputs.docker_tag }}" ]]; then
             echo "⚠️ docker_tag is empty, using 'latest'."
