@@ -1,4 +1,5 @@
 name: Validate Application Pipeline
+
 on:
   push:
     branches:
@@ -6,34 +7,34 @@ on:
   workflow_call:
     inputs:
       branch:
-        description: 'Branch to validate'
+        description: "Branch to validate"
         required: true
         type: string
       dockerfile:
-        description: 'Path to the dockerfile'
+        description: "Path to the dockerfile"
         required: true
         type: string
-        default: 'dockerfile'
+        default: "Dockerfile"
       dockerhub_repo:
-        description: 'Dockerhub repo name'
+        description: "DockerHub repo name"
         required: true
         type: string
-        default: 'venkatalakshmi0448/nodejs-docker'
+        default: "venkatalakshmi0448/nodejs-docker"
       deploy_env:
-        description: 'Deployment environment'
+        description: "Deployment environment"
         required: true
         type: string
-        default: 'staging'
+        default: "staging"
 
 jobs:
   validate:
     runs-on: ubuntu-latest
     environment:
-      name: 'validate'
-    
+      name: "validate"
+
     strategy:
       matrix:
-        step: ['checkout', 'docker-login', 'docker-build-push']
+        step: ["checkout", "docker-login", "docker-build-push"]
 
     steps:
       # Checkout step
@@ -44,7 +45,17 @@ jobs:
           ref: ${{ inputs.branch }}
           fetch-depth: 0  # Ensures full repository is checked out
           submodules: true  # If your repo has submodules
-        
+
+      # Verify Dockerfile exists before proceeding
+      - name: Verify Dockerfile
+        if: ${{ matrix.step == 'checkout' }}
+        run: |
+          if [ ! -f "${{ inputs.dockerfile }}" ]; then
+            echo "❌ ERROR: Dockerfile not found at ${{ inputs.dockerfile }}"
+            exit 1
+          fi
+          echo "✅ Dockerfile found at ${{ inputs.dockerfile }}"
+
       # Docker login step
       - name: Docker Login
         if: ${{ matrix.step == 'docker-login' }}
@@ -54,28 +65,46 @@ jobs:
           password: ${{ secrets.DOCKERHUB_PASSWORD }}
 
       - name: Check Docker login status
+        if: ${{ matrix.step == 'docker-login' }}
         run: |
-            echo "Docker login successful!"
-            docker info
-     
-   # Docker Buildx setup
+          echo "✅ Docker login successful!"
+          docker info
+
+      # Docker Buildx setup
       - name: Set up Docker Buildx
         if: ${{ matrix.step == 'docker-build-push' }}
         uses: docker/setup-buildx-action@v2
 
-      - name: Extract metadata (tags, labels) for docker
+      - name: Extract metadata (tags, labels) for Docker
         id: meta
+        if: ${{ matrix.step == 'docker-build-push' }}
         uses: docker/metadata-action@v3
-        with: 
-            images: venkatalakshmi0448/nodejs-docker
+        with:
+          images: ${{ inputs.dockerhub_repo }}
 
-   # Docker build and push step
-      - name: build and Push Docker image
+      # Verify Docker context and BuildKit before building
+      - name: Verify Docker Context & BuildKit
+        if: ${{ matrix.step == 'docker-build-push' }}
+        run: |
+          echo "🛠️ Verifying Docker Context"
+          docker context ls
+          docker context use default
+          echo "✅ Docker context set to default"
+
+          echo "🔧 Checking BuildKit Status"
+          if [[ "$(docker buildx inspect default | grep -c 'Driver: docker-container')" -eq 0 ]]; then
+            echo "🔄 Enabling BuildKit"
+            export DOCKER_BUILDKIT=1
+          fi
+          echo "✅ BuildKit enabled"
+
+      # Docker build and push step
+      - name: Build and Push Docker image
         if: ${{ matrix.step == 'docker-build-push' }}
         uses: docker/build-push-action@v3
         with:
           context: .
-          file: ${{ inputs.dockerfile }} 
+          file: ${{ inputs.dockerfile }}
           push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
@@ -85,6 +114,6 @@ jobs:
     steps:
       - name: Check if environment variables are set
         run: |
-          echo "Validating Environment Variables"
+          echo "✅ Validating Environment Variables"
           echo "DOCKERHUB_USERNAME = ${{ secrets.DOCKERHUB_USERNAME }}"
           echo "DOCKERHUB_PASSWORD = ${{ secrets.DOCKERHUB_PASSWORD }}"
