@@ -43,10 +43,10 @@ jobs:
 
     strategy:
       matrix:
-        branch: ${{ fromJson(inputs.branches) }}
-        dockerfile: ${{ fromJson(inputs.dockerfiles) }}
-        docker_tag: ${{ fromJson(inputs.docker_tags) }}
-        deploy_env: ${{ fromJson(inputs.deploy_envs) }}
+        branch: ${{ fromJson(inputs.branches || '["main"]') }}
+        dockerfile: ${{ fromJson(inputs.dockerfiles || '["Dockerfile"]') }}
+        docker_tag: ${{ fromJson(inputs.docker_tags || '["latest"]') }}
+        deploy_env: ${{ fromJson(inputs.deploy_envs || '["staging"]') }}
       fail-fast: false
 
     steps:
@@ -96,8 +96,7 @@ jobs:
           context: .
           file: ${{ matrix.dockerfile }}
           push: true
-          tags: |
-            ${{ inputs.dockerhub_repo }}:${{ matrix.docker_tag }}
+          tags: ${{ inputs.dockerhub_repo }}:${{ matrix.docker_tag }}
           cache-from: type=registry,ref=${{ inputs.dockerhub_repo }}:latest
           cache-to: type=inline
 
