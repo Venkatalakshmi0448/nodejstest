@@ -20,7 +20,7 @@ on:
         description: "DockerHub repository name"
         required: false
         type: string
-        default: "venkatalakshmi0448/nodejs-docker"
+        default: "venkatalakshmi0448/nodejs-docker:latest"
       docker_tag:
         description: "Docker image tag"
         required: false
