@@ -20,7 +20,7 @@ on:
         description: "DockerHub repository name"
         required: false
         type: string
-        default: "venkatalakshmi0448/nodejs-docker"  # ✅ Default set here
+        default: "venkatalakshmi0448/nodejs-docker"
       docker_tag:
         description: "Docker image tag"
         required: false
@@ -50,27 +50,27 @@ jobs:
       # Validate Inputs Before Proceeding
       - name: Validate Inputs
         run: |
-          echo "🚀 Validating inputs..."
+          echo "Validating inputs..."
           if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
-            echo "⚠️ dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
+            echo "dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
             dockerhub_repo="venkatalakshmi0448/nodejs-docker"
           else
             dockerhub_repo="${{ inputs.dockerhub_repo }}"
           fi
           if [[ -z "${{ inputs.docker_tag }}" ]]; then
-            echo "⚠️ docker_tag is empty, using 'latest'."
+            echo "docker_tag is empty, using 'latest'."
           fi
-          echo "✅ Inputs validation passed."
+          echo "Inputs validation passed."
 
       # Validate Secrets Before Proceeding
       - name: Validate Secrets
         run: |
-          echo "🔐 Validating secrets..."
+          echo "Validating secrets..."
           if [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" || -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]]; then
-            echo "❌ Required secrets are missing!"
+            echo "Required secrets are missing!"
             exit 1
           fi
-          echo "✅ Secrets validation passed."
+          echo "Secrets validation passed."
 
       # Docker Login
       - name: Log in to DockerHub
@@ -84,10 +84,10 @@ jobs:
         run: |
           echo "🔍 Checking Docker login..."
           if ! docker info | grep -q 'Username'; then
-            echo "❌ Docker login failed!"
+            echo "Docker login failed!"
             exit 1
           fi
-          echo "✅ Docker login successful!"
+          echo "Docker login successful!"
 
       # Set up Buildx
       - name: Set up Docker Buildx
