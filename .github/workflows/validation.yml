@@ -18,11 +18,12 @@ on:
         default: "Dockerfile"
       dockerhub_repo:
         description: "DockerHub repository name"
-        required: true
+        required: false
         type: string
+        default: "venkatalakshmi0448/nodejs-docker"  # ✅ Default set here
       docker_tag:
         description: "Docker image tag"
-        required: true
+        required: false
         type: string
         default: "latest"
       deploy_env:
@@ -51,8 +52,10 @@ jobs:
         run: |
           echo "🚀 Validating inputs..."
           if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
-            echo "❌ dockerhub_repo is missing!"
-            exit 1
+            echo "⚠️ dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
+            dockerhub_repo="venkatalakshmi0448/nodejs-docker"
+          else
+            dockerhub_repo="${{ inputs.dockerhub_repo }}"
           fi
           if [[ -z "${{ inputs.docker_tag }}" ]]; then
             echo "⚠️ docker_tag is empty, using 'latest'."
@@ -93,18 +96,4 @@ jobs:
       # Debug Docker Image Tags
       - name: Debug Docker Image Tags
         run: |
-          echo "🐳 DockerHub Repo: ${{ inputs.dockerhub_repo }}"
-          echo "🏷️  Docker Image Tag: ${{ inputs.docker_tag }}"
-          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}"
-
-      # Build and Push Docker Image
-      - name: Build and Push Docker Image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ${{ inputs.dockerfile }}
-          push: true
-          tags: |
-            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}
-            ${{ inputs.dockerhub_repo }}:latest
-          labels: "built-by=github-actions"
+          echo "🐳
