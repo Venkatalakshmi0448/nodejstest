@@ -56,12 +56,21 @@ jobs:
         if: matrix.step == 'checkout'
         run: |
           echo "🚀 Validating inputs..."
+          
+          # Ensure dockerhub_repo is not empty
           if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
-            echo "⚠️ dockerhub_repo is missing! Using default: venkatalakshmi0448/nodejs-docker"
+            echo "❌ dockerhub_repo is missing!"
+            exit 1
           fi
+
+          # Ensure docker_tag is not empty
           if [[ -z "${{ inputs.docker_tag }}" ]]; then
             echo "⚠️ docker_tag is empty, using 'latest'."
+            echo "docker_tag=latest" >> $GITHUB_ENV
+          else
+            echo "docker_tag=${{ inputs.docker_tag }}" >> $GITHUB_ENV
           fi
+
           echo "✅ Inputs validation passed."
 
       # Validate Secrets
@@ -104,16 +113,8 @@ jobs:
         if: matrix.step == 'docker-build-push'
         run: |
           echo "🐳 DockerHub Repo: ${{ inputs.dockerhub_repo }}"
-          
-          # Ensure docker_tag has a valid value
-          DOCKER_TAG="${{ inputs.docker_tag }}"
-          if [[ -z "$DOCKER_TAG" ]]; then
-            echo "⚠️ docker_tag is empty, using 'latest'."
-            DOCKER_TAG="latest"
-          fi
-
-          echo "🏷️ Docker Image Tag: $DOCKER_TAG"
-          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:$DOCKER_TAG"
+          echo "🏷️ Docker Image Tag: ${{ env.docker_tag }}"
+          echo "📝 Full Image Name: ${{ inputs.dockerhub_repo }}:${{ env.docker_tag }}"
 
       # Build and Push Docker Image
       - name: Build and Push Docker Image
@@ -124,6 +125,6 @@ jobs:
           file: ${{ inputs.dockerfile }}
           push: true
           tags: |
-            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag || 'latest' }}
+            ${{ inputs.dockerhub_repo }}:${{ env.docker_tag }}
             ${{ inputs.dockerhub_repo }}:latest
           labels: "built-by=github-actions"
