@@ -8,18 +8,18 @@ on:
     inputs:
       branch:
         description: "Branch to validate"
-        required: true
+        required: false
         type: string
+        default: "main"
       dockerfile:
         description: "Path to the Dockerfile"
-        required: true
+        required: false
         type: string
         default: "Dockerfile"
       dockerhub_repo:
         description: "DockerHub repository name"
         required: true
         type: string
-        default: "venkatalakshmi0448/nodejs-docker"
       docker_tag:
         description: "Docker image tag"
         required: false
@@ -27,7 +27,7 @@ on:
         default: "latest"
       deploy_env:
         description: "Deployment environment"
-        required: true
+        required: false
         type: string
         default: "staging"
 
@@ -50,18 +50,30 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v3
         with:
-          ref: ${{ inputs.branch || 'main' }}
+          ref: ${{ inputs.branch }}
           fetch-depth: 0
           submodules: true
 
+      # Validate Inputs Before Proceeding
+      - name: Validate Inputs
+        run: |
+          if [[ -z "${{ inputs.dockerhub_repo }}" ]]; then
+            echo "❌ dockerhub_repo is missing!"
+            exit 1
+          fi
+          if [[ -z "${{ inputs.docker_tag }}" ]]; then
+            echo "⚠️ docker_tag is empty, using 'latest'."
+          fi
+          echo "✅ Inputs validation passed."
+
       # Validate Secrets Before Proceeding
-      - name: Validate Environment Variables
+      - name: Validate Secrets
         run: |
           if [[ -z "${{ secrets.DOCKERHUB_USERNAME }}" || -z "${{ secrets.DOCKERHUB_PASSWORD }}" ]]; then
             echo "❌ Required secrets are missing!"
             exit 1
           fi
-          echo "✅ Required secrets are set."
+          echo "✅ Secrets validation passed."
 
       # Docker Login
       - name: Log in to DockerHub
@@ -73,9 +85,8 @@ jobs:
       # Verify Docker Login
       - name: Verify Docker Login
         run: |
-          echo "🔍 Checking Docker login..."
-          if ! docker login -u "${{ secrets.DOCKERHUB_USERNAME }}" -p "${{ secrets.DOCKERHUB_PASSWORD }}"; then
-            echo "❌ Login failed! Check credentials."
+          if ! docker info | grep -q 'Username'; then
+            echo "❌ Docker login failed!"
             exit 1
           fi
           echo "✅ Docker login successful!"
@@ -92,6 +103,6 @@ jobs:
           file: ${{ inputs.dockerfile }}
           push: true
           tags: |
-            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag || 'latest' }}
+            ${{ inputs.dockerhub_repo }}:${{ inputs.docker_tag }}
             ${{ inputs.dockerhub_repo }}:latest
           labels: "built-by=github-actions"
