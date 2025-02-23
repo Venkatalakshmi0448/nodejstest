@@ -22,7 +22,7 @@ on:
         type: string
       docker_tag:
         description: "Docker image tag"
-        required: false
+        required: true
         type: string
         default: "latest"
       deploy_env:
@@ -30,14 +30,6 @@ on:
         required: false
         type: string
         default: "staging"
-
-    secrets:
-      DOCKERHUB_USERNAME:
-        description: "DockerHub username"
-        required: true
-      DOCKERHUB_PASSWORD:
-        description: "DockerHub password or personal access token"
-        required: true
 
 jobs:
   validate:
